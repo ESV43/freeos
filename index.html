@@ -40,22 +40,32 @@
         .m3-input:focus { border-color: #D0BCFF; border-width: 2px; }
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #49454F; border-radius: 10px; }
-        .comic-style-option { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background 0.2s ease; }
+        .comic-style-option { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; cursor: pointer; transition: background 0.2s ease; border: 1px solid transparent; }
         .comic-style-option:hover { background: #33313B; }
-        .comic-style-option.active { background: #4A4458; }
+        .comic-style-option.active { background: #4A4458; border-color: #D0BCFF; color: #D0BCFF; }
+        
+        .loader-dots div {
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
+        .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(4) { left: 56px; animation: loader-dots3 0.6s infinite; }
+        @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
+        @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
     </style>
 </head>
 <body class="p-0 m-0">
 
     <!-- App Bar -->
-    <header class="h-16 flex items-center justify-between px-6 bg-m3-surface border-b border-m3-variant sticky top-0 z-50">
+    <header class="h-16 flex items-center justify-between px-6 bg-m3-surface border-b border-m3-variant sticky top-0 z-50 shadow-md">
         <div class="flex items-center gap-3">
             <span class="material-symbols-outlined text-m3-primary">auto_awesome</span>
             <h1 class="text-xl font-medium tracking-tight">Visionary Studio</h1>
         </div>
 
         <div class="flex items-center gap-4">
-            <!-- Uncensored Mode Toggle -->
             <div class="flex items-center gap-2 px-4 py-2 bg-m3-surface-container rounded-full border border-red-900/30">
                 <span class="text-xs font-bold text-red-400">RAW MODE</span>
                 <input type="checkbox" id="raw-toggle" class="accent-red-500 w-4 h-4 cursor-pointer">
@@ -65,7 +75,7 @@
 
     <div class="flex h-[calc(100vh-64px)] overflow-hidden">
 
-        <!-- Navigation Rail (Material 3) -->
+        <!-- Navigation Rail -->
         <nav class="w-72 border-r border-m3-variant p-4 flex flex-col gap-2 bg-m3-surface">
             <div onclick="switchTab('gen')" class="nav-item active" id="btn-gen">
                 <span class="material-symbols-outlined">image</span> Single Generation
@@ -77,13 +87,13 @@
                 <span class="material-symbols-outlined">edit_square</span> Batch Editing
             </div>
             <div onclick="switchTab('comic')" class="nav-item" id="btn-comic">
-                <span class="material-symbols-outlined">auto_stories</span> Comic Mode
+                <span class="material-symbols-outlined">auto_stories</span> AI Director (Comic)
             </div>
 
             <div class="mt-auto p-4 m3-card bg-m3-variant/30">
-                <label class="text-xs text-m3-primary font-bold uppercase block mb-2">Global Model</label>
+                <label class="text-xs text-m3-primary font-bold uppercase block mb-2">Global API Model</label>
                 <select id="model-select" class="w-full bg-m3-surface border border-m3-outline rounded-lg p-2 text-sm text-white focus:ring-2 ring-m3-primary outline-none">
-                    <!-- Population via JS -->
+                    <!-- Populated via JS -->
                 </select>
             </div>
         </nav>
@@ -109,9 +119,7 @@
                 <h2 class="text-3xl font-light mb-6 text-center">Model Comparison</h2>
                 <div class="m3-card p-6 mb-8">
                     <input type="text" id="compare-prompt" class="m3-input mb-4" placeholder="Prompt to compare...">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4" id="compare-selection">
-                        <!-- Checkboxes via JS -->
-                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4" id="compare-selection"></div>
                     <button onclick="runCompare()" class="w-full py-4 rounded-full bg-m3-secondary text-m3-on-primary font-bold">START BENCHMARK</button>
                 </div>
                 <div id="compare-output" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
@@ -129,34 +137,58 @@
                 <div id="edit-output" class="grid grid-cols-2 gap-4 mt-8"></div>
             </section>
 
-            <!-- Comic Tab -->
+            <!-- Comic Tab (AI Director) -->
             <section id="tab-comic" class="tab-content max-w-5xl mx-auto">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-3xl font-light">Comic Narrator</h2>
-                    <span class="text-sm bg-m3-variant px-3 py-1 rounded-full text-m3-secondary font-mono uppercase tracking-widest">Story Sequencer</span>
+                    <div>
+                        <h2 class="text-3xl font-light">AI Director <span class="text-m3-primary">Comic Mode</span></h2>
+                        <p class="text-gray-400 mt-2 text-sm">Powered by Gemini. The AI will extract characters, lock their identity, and build a consistent storyboard.</p>
+                    </div>
+                    <span class="text-sm bg-m3-variant px-3 py-1 rounded-full text-m3-secondary font-mono uppercase tracking-widest flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">psychology</span> Gemini Active
+                    </span>
                 </div>
+
                 <div class="m3-card p-6 mb-6">
-                    <textarea id="comic-text" rows="6" class="m3-input mb-4" placeholder="Type your story here. Use sentences to separate panels..."></textarea>
+                    <textarea id="comic-text" rows="5" class="m3-input mb-4" placeholder="Type your rough story here. E.g. A cyberpunk detective named Jax explores a neon alleyway, he finds a glowing artifact, and gets ambushed by a robot..."></textarea>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" id="comic-style-selection">
                         <div class="comic-style-option active" data-style="2d">
                             <span class="material-symbols-outlined">brush</span>
-                            2D Cartoon
+                            <div class="flex flex-col"><span class="font-bold">2D Cartoon</span><span class="text-[10px] text-gray-400">Cel-shaded comic</span></div>
                         </div>
                         <div class="comic-style-option" data-style="3d">
                             <span class="material-symbols-outlined">3d_rotation</span>
-                            3D Render
+                            <div class="flex flex-col"><span class="font-bold">3D Render</span><span class="text-[10px] text-gray-400">Pixar/Octane style</span></div>
                         </div>
                         <div class="comic-style-option" data-style="realistic">
-                            <span class="material-symbols-outlined">photo</span>
-                            Realistic
+                            <span class="material-symbols-outlined">photo_camera</span>
+                            <div class="flex flex-col"><span class="font-bold">Photorealism</span><span class="text-[10px] text-gray-400">Cinematic photo</span></div>
                         </div>
                     </div>
-                    <label class="text-xs text-m3-primary font-bold uppercase block mb-2">Model for Comic</label>
-                    <select id="comic-model-select" class="w-full bg-m3-surface border border-m3-outline rounded-lg p-2 text-sm text-white focus:ring-2 ring-m3-primary outline-none">
-                        <!-- Populate via JS, option "global" value -->
+                    
+                    <label class="text-xs text-m3-primary font-bold uppercase block mb-2">Image Generator Model</label>
+                    <select id="comic-model-select" class="w-full bg-m3-surface border border-m3-outline rounded-lg p-2 text-sm text-white focus:ring-2 ring-m3-primary outline-none mb-4">
+                        <!-- Populated via JS -->
                     </select>
-                    <button onclick="runComic()" class="bg-m3-primary text-m3-on-primary px-8 py-3 rounded-full font-bold mt-4">GENERATE PANELS</button>
+
+                    <button onclick="runComic()" id="comic-btn" class="bg-m3-primary text-m3-on-primary px-8 py-3 rounded-full font-bold flex items-center justify-center gap-2 w-full md:w-auto transition-all hover:opacity-90 active:scale-95">
+                        <span class="material-symbols-outlined">movie_creation</span>
+                        GENERATE STORYBOARD
+                    </button>
+                    
+                    <!-- Gemini Loader -->
+                    <div id="gemini-loader" class="hidden mt-4 bg-m3-surface p-4 rounded-lg border border-m3-variant flex items-center gap-4">
+                        <div class="loader-dots relative w-20 h-5">
+                            <div class="absolute top-0 w-3 h-3 rounded-full bg-m3-primary"></div>
+                            <div class="absolute top-0 w-3 h-3 rounded-full bg-m3-primary"></div>
+                            <div class="absolute top-0 w-3 h-3 rounded-full bg-m3-primary"></div>
+                            <div class="absolute top-0 w-3 h-3 rounded-full bg-m3-primary"></div>
+                        </div>
+                        <span id="gemini-status" class="text-sm font-medium text-m3-secondary animate-pulse">Gemini is analyzing the story and creating Identity Locks...</span>
+                    </div>
                 </div>
+                
                 <div id="comic-output" class="flex flex-col gap-12"></div>
             </section>
 
@@ -164,51 +196,42 @@
     </div>
 
     <script>
+        // API Keys & Config
+        const GEMINI_API_KEY = "AIzaSyAb0RQP5LDSZZaQzXxxUd1Imy6ImAFwqcw"; // Note: Provided by user request.
+        // We use gemini-1.5-flash as the fallback standard since "flash lite" is integrated into standard flash endpoints.
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
+
         const MODEL_LIST = [
             "gemini-2.5-flash-image-preview", "gemini-3.1-flash-image-preview", "gemini-3-pro-image-preview",
-            "gpt-image-1.5", "gpt-image-1", "gpt-image-1-mini", "dall-e-3", "dall-e-2",
+            "dall-e-3", "dall-e-2", "gpt-image-1.5", "gpt-image-1",
+            "black-forest-labs/FLUX.1-pro", "black-forest-labs/FLUX.1-schnell", "black-forest-labs/FLUX.1.1-pro",
+            "google/imagen-4.0-ultra", "google/imagen-4.0-preview", "google/imagen-4.0-fast",
+            "stabilityai/stable-diffusion-3-medium", "stabilityai/stable-diffusion-xl-base-1.0",
             "ByteDance-Seed/Seedream-3.0", "ByteDance-Seed/Seedream-4.0",
-            "HiDream-ai/HiDream-I1-Dev", "HiDream-ai/HiDream-I1-Fast", "HiDream-ai/HiDream-I1-Full",
-            "Lykon/DreamShaper", "Qwen/Qwen-Image", "RunDiffusion/Juggernaut-pro-flux",
-            "Rundiffusion/Juggernaut-Lightning-Flux", "black-forest-labs/FLUX.1-Canny-pro",
-            "black-forest-labs/FLUX.1-dev", "black-forest-labs/FLUX.1-dev-lora",
-            "black-forest-labs/FLUX.1-kontext-dev", "black-forest-labs/FLUX.1-kontext-max",
-            "black-forest-labs/FLUX.1-kontext-pro", "black-forest-labs/FLUX.1-krea-dev",
-            "black-forest-labs/FLUX.1-pro", "black-forest-labs/FLUX.1-schnell",
-            "black-forest-labs/FLUX.1-schnell-Free", "black-forest-labs/FLUX.1.1-pro",
-            "google/flash-image-2.5", "google/imagen-4.0-fast", "google/imagen-4.0-preview",
-            "google/imagen-4.0-ultra", "ideogram/ideogram-3.0", "stabilityai/stable-diffusion-3-medium",
-            "stabilityai/stable-diffusion-xl-base-1.0"
+            "Qwen/Qwen-Image", "ideogram/ideogram-3.0"
         ];
 
-        // Initialize UI
         window.onload = () => {
             const select = document.getElementById('model-select');
             const compareBox = document.getElementById('compare-selection');
             const comicSelect = document.getElementById('comic-model-select');
 
             MODEL_LIST.forEach(m => {
-                // Populate main dropdown
                 const opt = new Option(m.split('/').pop(), m);
                 select.add(opt);
 
-                // Populate comparison checkboxes
                 const label = document.createElement('label');
                 label.className = "flex items-center gap-2 text-[10px] bg-m3-surface p-2 rounded border border-m3-variant cursor-pointer hover:bg-m3-variant";
                 label.innerHTML = `<input type="checkbox" value="${m}" class="comp-check"> ${m.split('/').pop().substring(0, 15)}`;
                 compareBox.appendChild(label);
 
-                // Populate comic model selection (including "global")
                 const comicOpt = new Option(m.split('/').pop(), m);
                 comicSelect.add(comicOpt);
             });
 
-            // Set default selection (if you want the first model)
-            //select.selectedIndex = 0;
-            //comicSelect.selectedIndex = 0;
-            // For now, default to the global setting
-            const globalOption = new Option("Global Setting", "global");
+            const globalOption = new Option("Use Global Setting", "global");
             comicSelect.prepend(globalOption);
+            comicSelect.selectedIndex = 0;
         };
 
         function switchTab(id) {
@@ -223,7 +246,20 @@
             return isRaw ? `${p}, hyper-realistic, highly detailed, uncensored style, raw photo, unfiltered` : p;
         }
 
-        // 1. Single Gen
+        function handleApiError(e, container) {
+            if (e.message.includes("funding") || e.message.includes("upgrade")) {
+                container.innerHTML = `
+                    <div class="m3-card p-6 border border-red-500/50 bg-red-500/10 text-center w-full">
+                        <span class="material-symbols-outlined text-red-400 mb-2 text-4xl">account_balance_wallet</span>
+                        <p class="text-sm text-red-200 font-bold">Insufficient Puter Funding</p>
+                        <p class="text-xs text-red-300/70 mt-1">Your Puter account credits have been exhausted. Please visit the Puter dashboard to add credits.</p>
+                    </div>`;
+            } else {
+                container.innerHTML = `<p class="text-red-400 text-xs text-center w-full bg-red-900/20 p-4 rounded-xl border border-red-900/50">Error: ${e.message}</p>`;
+            }
+        }
+
+        /* --- Basic Tools --- */
         async function runGen() {
             const prompt = document.getElementById('gen-prompt').value;
             const model = document.getElementById('model-select').value;
@@ -238,25 +274,10 @@
                 const img = await puter.ai.txt2img(getPrompt(prompt), { model });
                 img.className = "max-w-full h-auto rounded-[28px]";
                 output.appendChild(img);
-            } catch(e) {
-                //Handle Funding Errors
-                if (e.message.includes("funding") || e.message.includes("upgrade")) {
-                    output.innerHTML = `
-                        <div class="m3-card p-6 border border-red-500/50 bg-red-500/10 text-center">
-                            <span class="material-symbols-outlined text-red-400 mb-2">account_balance_wallet</span>
-                            <p class="text-sm text-red-200">Insufficient Funding</p>
-                            <p class="text-xs text-red-300/70 mt-1">Your Puter account credits have been exhausted. Please visit the Puter dashboard to add credits or wait for your limit to reset.</p>
-                            <a href="https://puter.com/dashboard" target="_blank" class="mt-4 inline-block text-xs font-bold text-m3-primary hover:underline">GO TO DASHBOARD</a>
-                        </div>`;
-                } else {
-                    output.innerHTML = `<p class="text-red-400 text-xs">Error: ${e.message}</p>`;
-                }
-            } finally {
-                loader.classList.add('hidden');
-            }
+            } catch(e) { handleApiError(e, output); } 
+            finally { loader.classList.add('hidden'); }
         }
 
-        // 2. Compare
         async function runCompare() {
             const prompt = document.getElementById('compare-prompt').value;
             const checks = document.querySelectorAll('.comp-check:checked');
@@ -270,19 +291,18 @@
                 const card = document.createElement('div');
                 card.className = "m3-card overflow-hidden";
                 card.innerHTML = `<div class="p-3 text-xs font-bold text-m3-primary border-b border-m3-variant">${model}</div>
-                                  <div class="h-64 bg-m3-variant/20 flex items-center justify-center">Loading...</div>`;
+                                  <div class="h-64 bg-m3-variant/20 flex items-center justify-center animate-pulse">Generating...</div>`;
                 output.appendChild(card);
 
                 puter.ai.txt2img(getPrompt(prompt), { model }).then(img => {
-                    img.className = "w-full h-auto";
+                    img.className = "w-full h-auto object-cover";
                     card.children[1].replaceWith(img);
                 }).catch(e => {
-                    card.children[1].innerHTML = `<span class="text-red-400 p-4 text-xs">${e.message}</span>`;
+                    card.children[1].innerHTML = `<span class="text-red-400 p-4 text-xs">Failed</span>`;
                 });
             }
         }
 
-        // 3. Edit (Batch)
         async function runEdit() {
             const files = document.getElementById('edit-files').files;
             const inst = document.getElementById('edit-instruction').value;
@@ -298,82 +318,153 @@
                 reader.onload = async () => {
                     const b64 = reader.result.split(',')[1];
                     const card = document.createElement('div');
-                    card.className = "m3-card p-2 text-center text-xs";
-                    card.innerText = "Editing...";
+                    card.className = "m3-card p-4 text-center text-xs text-m3-secondary flex flex-col items-center gap-2";
+                    card.innerHTML = `<div class="animate-spin w-6 h-6 border-2 border-m3-primary border-t-transparent rounded-full mb-2"></div>Processing ${file.name}...`;
                     output.appendChild(card);
 
                     try {
                         const res = await puter.ai.txt2img(getPrompt(inst), {
                             model, input_image: b64, input_image_mime_type: file.type
                         });
-                        res.className = "w-full rounded-xl mt-2";
-                        card.innerText = file.name;
+                        res.className = "w-full rounded-xl shadow-lg";
+                        card.innerHTML = `<span class="font-bold text-m3-primary mb-2">${file.name}</span>`;
                         card.appendChild(res);
-                    } catch(e) { card.innerText = "Error: " + e.message; }
+                    } catch(e) { 
+                        card.innerHTML = `<span class="text-red-400">Error on ${file.name}</span>`;
+                    }
                 };
             }
         }
 
-        // 4. Comic
-        async function runComic() {
-            const story = document.getElementById('comic-text').value;
-            const comicStyle = document.querySelector('#comic-style-selection .comic-style-option.active')?.dataset.style || "2d";
-            const comicModel = document.getElementById('comic-model-select').value;
-            const output = document.getElementById('comic-output');
+        /* --- AI Director (Comic Mode) with Gemini --- */
+        document.getElementById('comic-style-selection').addEventListener('click', (e) => {
+            const option = e.target.closest('.comic-style-option');
+            if (option) {
+                document.querySelectorAll('.comic-style-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+            }
+        });
 
-            // Set the model, use global if it's selected
-            const model = comicModel === 'global' ? document.getElementById('model-select').value : comicModel;
+        async function getGeminiStoryboard(story, stylePrompt) {
+            const systemPrompt = `
+You are an expert comic book director and AI image prompt engineer. 
+Analyze the following story and create a sequence of image generation prompts.
 
-            const stylePrompts = {
-                '2d': "2D cartoon, comic book style, cel-shaded, bold outlines, vibrant colors",
-                '3d': "3D render, cinematic lighting, highly detailed, realistic textures, octane render",
-                'realistic': "photorealistic, high resolution, detailed, professional photography"
+CRITICAL INSTRUCTIONS:
+1. Identify all main characters in the story.
+2. Create an "Identity Lock" for them: a highly detailed, rigid physical description (age, exact hair style/color, exact clothing, colors, face features). This lock must be injected into EVERY image prompt where the character appears to ensure absolute visual consistency.
+3. Divide the story into 3 to 6 logical sequential panels.
+4. For each panel, provide a short "narrative" caption for the user to read.
+5. For each panel, provide an "image_prompt". The image prompt MUST include the character Identity Locks, the setting, the action, and append this exact style string at the end: "${stylePrompt}"
+
+Respond STRICTLY in valid JSON format only, exactly like this:
+{
+  "panels": [
+    {
+      "narrative": "Text for the user to read.",
+      "image_prompt": "Highly detailed prompt containing identity locks, environment, and style..."
+    }
+  ]
+}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: `${systemPrompt}\n\nSTORY:\n${story}` }]}],
+                generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
             };
 
-            const stylePrefix = stylePrompts[comicStyle] || "comic book panel, cel-shaded, continuous visual style. ";
-            const panels = story.split(/[.!?]/).filter(s => s.trim().length > 10);
-            if(panels.length === 0) return alert("Please write a longer story.");
+            const response = await fetch(GEMINI_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
-            output.innerHTML = '';
-
-            for(let i=0; i<panels.length; i++) {
-                const scene = panels[i].trim();
-                const section = document.createElement('div');
-                section.className = "flex flex-col md:flex-row gap-8 items-center";
-                section.innerHTML = `
-                    <div class="flex-1 order-2 md:order-${i%2===0 ? '1':'2'}">
-                         <div class="text-5xl font-black text-m3-variant mb-4">0${i+1}</div>
-                         <p class="text-xl font-light italic text-m3-secondary leading-relaxed border-l-4 border-m3-primary pl-6">${scene}</p>
-                    </div>
-                    <div class="w-full md:w-1/2 m3-card aspect-square overflow-hidden flex items-center justify-center bg-m3-variant/10 relative order-1 md:order-${i%2===0 ? '2':'1'}">
-                        <div class="animate-pulse text-m3-outline">Drawing Scene...</div>
-                    </div>
-                `;
-                output.appendChild(section);
-
-                try {
-                    const finalPrompt = getPrompt(`${stylePrefix} Scene: ${scene}`);
-                    const imgElement = await puter.ai.txt2img(finalPrompt, { model: model });
-                    imgElement.className = "w-full h-full object-cover rounded-[28px]";
-                    section.querySelector('.animate-pulse').replaceWith(imgElement);
-                } catch(e) {
-                   section.querySelector('.animate-pulse').innerHTML = `<span class="text-red-400 p-4 text-xs">Error: ${e.message}</span>`;
-                }
+            if (!response.ok) throw new Error("Gemini API failed to generate storyboard.");
+            const data = await response.json();
+            
+            try {
+                // Parse the response text as JSON
+                const jsonString = data.candidates[0].content.parts[0].text;
+                return JSON.parse(jsonString);
+            } catch (err) {
+                throw new Error("Gemini returned invalid JSON structure.");
             }
         }
 
-        // Comic Style Selection - NEW
-        document.getElementById('comic-style-selection').addEventListener('click', (e) => {
-            if (e.target.classList.contains('comic-style-option')) {
-                // Remove 'active' from all options
-                document.querySelectorAll('.comic-style-option').forEach(opt => opt.classList.remove('active'));
-                // Add 'active' to the clicked option
-                e.target.classList.add('active');
-            } else if (e.target.parentElement.classList.contains('comic-style-option')) {
-                document.querySelectorAll('.comic-style-option').forEach(opt => opt.classList.remove('active'));
-                e.target.parentElement.classList.add('active');
+        async function runComic() {
+            const story = document.getElementById('comic-text').value;
+            if(!story) return alert("Please type a story first.");
+
+            const comicStyle = document.querySelector('#comic-style-selection .comic-style-option.active')?.dataset.style || "2d";
+            const rawModel = document.getElementById('comic-model-select').value;
+            const model = rawModel === 'global' ? document.getElementById('model-select').value : rawModel;
+            
+            const output = document.getElementById('comic-output');
+            const loader = document.getElementById('gemini-loader');
+            const statusText = document.getElementById('gemini-status');
+            const btn = document.getElementById('comic-btn');
+
+            const stylePrompts = {
+                '2d': "2D cartoon, comic book style, cel-shaded, bold outlines, vibrant colors, graphic novel",
+                '3d': "3D render, cinematic lighting, highly detailed, octane render, unreal engine 5 style",
+                'realistic': "photorealistic, 8k resolution, highly detailed, professional cinematic photography"
+            };
+
+            output.innerHTML = '';
+            loader.classList.remove('hidden');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            try {
+                // Step 1: Call Gemini
+                statusText.innerText = "Gemini is analyzing the story and locking character identities...";
+                const storyboard = await getGeminiStoryboard(story, stylePrompts[comicStyle]);
+                
+                if (!storyboard.panels || storyboard.panels.length === 0) {
+                    throw new Error("No panels generated.");
+                }
+
+                // Step 2: Render UI Placeholders and Trigger Image Gen
+                statusText.innerText = `Gemini complete! Generating ${storyboard.panels.length} panels via Puter...`;
+                
+                for(let i=0; i < storyboard.panels.length; i++) {
+                    const panel = storyboard.panels[i];
+                    
+                    const section = document.createElement('div');
+                    section.className = "flex flex-col md:flex-row gap-8 items-center bg-m3-surface-container rounded-[32px] p-6 shadow-lg border border-m3-variant/30";
+                    section.innerHTML = `
+                        <div class="flex-1 order-2 md:order-${i%2===0 ? '1':'2'} px-4">
+                             <div class="text-6xl font-black text-m3-surface mb-6 font-mono opacity-50">0${i+1}</div>
+                             <p class="text-xl font-light text-m3-secondary leading-relaxed border-l-4 border-m3-primary pl-6 tracking-wide">${panel.narrative}</p>
+                             <div class="mt-4 text-[10px] text-gray-500 font-mono bg-m3-surface p-2 rounded max-h-24 overflow-y-auto">Prompt: ${panel.image_prompt}</div>
+                        </div>
+                        <div class="w-full md:w-1/2 aspect-square overflow-hidden flex items-center justify-center bg-m3-surface relative order-1 md:order-${i%2===0 ? '2':'1'} rounded-[24px]">
+                            <div class="animate-pulse text-m3-primary flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined text-4xl">palette</span>
+                                <span class="text-xs font-bold tracking-widest uppercase">Painting Panel</span>
+                            </div>
+                        </div>
+                    `;
+                    output.appendChild(section);
+
+                    // Call Puter API for this panel asynchronously
+                    try {
+                        const finalPrompt = getPrompt(panel.image_prompt);
+                        const imgElement = await puter.ai.txt2img(finalPrompt, { model: model });
+                        imgElement.className = "w-full h-full object-cover shadow-inner";
+                        section.querySelector('.animate-pulse').replaceWith(imgElement);
+                    } catch(e) {
+                        handleApiError(e, section.querySelector('.animate-pulse').parentElement);
+                    }
+                }
+
+            } catch (err) {
+                output.innerHTML = `<div class="bg-red-900/20 text-red-400 p-6 rounded-2xl border border-red-500/50">Failed to process AI Director workflow: ${err.message}</div>`;
+            } finally {
+                loader.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
             }
-        });
+        }
     </script>
 </body>
 </html>
